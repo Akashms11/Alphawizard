@@ -1,0 +1,101 @@
+{{- if and .Values.defaultRules.create .Values.defaultRules.rules.kafkaProducerConsumer }}
+{{- $operatorJob := printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "operator" }}
+{{- $alertmanagerJob := printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "couchbase" }}
+{{- $namespace := .Release.Namespace }}
+apiVersion: {{ printf "%s/v1" (.Values.prometheusOperator.crdApiGroup | default "monitoring.coreos.com") }}
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "kafka-new-alerts.rules" | trunc 63 | trimSuffix "-" }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: kafka-new-alerts.rules
+    rules:
+
+{{- if .Values.kafkaProducerParam.enableKafkaProducerAverageRequestLatencyHigh }}
+    - alert: KafkaProducerAverageRequestLatencyHigh
+      annotations:
+        message: 'The average request latency experienced by the following Kafka producer was greater than {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageRequestLatencyHigh.latencyThreshold }} milliseconds: Application {{`{{ $labels.applicationName }}`}} and Client ID {{`{{ $labels.client_id }}`}} in instance {{`{{ $labels.instance }}`}} of service {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}.'
+      expr: kafka_producer_request_latency_avg > {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageRequestLatencyHigh.latencyThreshold }}
+      for: {{ .Values.kafkaProducerParam.KafkaProducerAverageRequestLatencyHigh.forDuration }}
+      labels:
+        severity: warning
+        expr: 'kafka_producer_request_latency_avg > {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageRequestLatencyHigh.latencyThreshold }}'
+{{- end }}
+
+{{- if .Values.kafkaProducerParam.enableKafkaProducerAverageIOWaitTimeHigh }}
+    - alert: KafkaProducerAverageIOWaitTimeHigh
+      annotations:
+        message: 'The average length of time the I/O thread of the following Kafka producer spent waiting for a socket ready for reads or writes was higher than {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageIOWaitTimeHigh.avgIOWaitTimeThreshold }} nanoseconds: Application {{`{{ $labels.applicationName }}`}} and Client ID {{`{{ $labels.client_id }}`}} in instance {{`{{ $labels.instance }}`}} of service {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}.'
+      expr: kafka_producer_io_wait_time_ns_avg > {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageIOWaitTimeHigh.avgIOWaitTimeThreshold }}
+      for: {{ .Values.kafkaProducerParam.KafkaProducerAverageIOWaitTimeHigh.forDuration }}
+      labels:
+        severity: warning
+        expr: 'kafka_producer_io_wait_time_ns_avg > {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageIOWaitTimeHigh.avgIOWaitTimeThreshold }}'
+{{- end }}
+
+{{- if .Values.kafkaProducerParam.enableKafkaProducerActiveConnectionCountLow }}
+    - alert: KafkaProducerActiveConnectionCountLow
+      annotations:
+        message: 'The following Kafka producer had no active connections: Application {{`{{ $labels.applicationName }}`}} and Client ID {{`{{ $labels.client_id }}`}} of service {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}.'
+      expr: sum by (namespace, service, applicationName, client_id) (kafka_producer_connection_count) < 1
+      for: {{ .Values.kafkaProducerParam.KafkaProducerActiveConnectionCountLow.forDuration }}
+      labels:
+        severity: warning
+        expr: 'sum by (namespace, service, applicationName, client_id) (kafka_producer_connection_count) < 1'
+{{- end }}
+
+{{- if .Values.kafkaProducerParam.enableKafkaProducerAverageRecordSizeHigh }}
+    - alert: KafkaProducerAverageRecordSizeHigh
+      annotations:
+        message: 'The average size of records produced by the following Kafka producer was higher than {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageRecordSizeHigh.avgRecordSizeThreshold }} bytes: Application {{`{{ $labels.applicationName }}`}} and Client ID {{`{{ $labels.client_id }}`}} in instance {{`{{ $labels.instance }}`}} of service {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}.'
+      expr: kafka_producer_record_size_avg > {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageRecordSizeHigh.avgRecordSizeThreshold }}
+      for: {{ .Values.kafkaProducerParam.KafkaProducerAverageRecordSizeHigh.forDuration }}
+      labels:
+        severity: warning
+        expr: 'kafka_producer_record_size_avg > {{ toYaml .Values.kafkaProducerParam.KafkaProducerAverageRecordSizeHigh.avgRecordSizeThreshold }}'
+{{- end }}
+
+{{- if .Values.kafkaConsumerParam.enableKafkaConsumerAverageFetchLatencyHigh }}
+    - alert: KafkaConsumerAverageFetchLatencyHigh
+      annotations:
+        message: 'The average fetch latency experienced by the following Kafka consumer was greater than {{ toYaml .Values.kafkaConsumerParam.KafkaConsumerAverageFetchLatencyHigh.latencyThreshold }} milliseconds: Application {{`{{ $labels.applicationName }}`}} and Client ID {{`{{ $labels.client_id }}`}} in instance {{`{{ $labels.instance }}`}} of service {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}.'
+      expr: kafka_consumer_fetch_manager_fetch_latency_avg > {{ toYaml .Values.kafkaConsumerParam.KafkaConsumerAverageFetchLatencyHigh.latencyThreshold }}
+      for: {{ .Values.kafkaConsumerParam.KafkaConsumerAverageFetchLatencyHigh.forDuration }}
+      labels:
+        severity: warning
+        expr: 'kafka_consumer_fetch_manager_fetch_latency_avg > {{ toYaml .Values.kafkaConsumerParam.KafkaConsumerAverageFetchLatencyHigh.latencyThreshold }}'
+{{- end }}
+
+{{- if .Values.kafkaConsumerParam.enableKafkaConsumerAverageIOWaitTimeHigh }}
+    - alert: KafkaConsumerAverageIOWaitTimeHigh
+      annotations:
+        message: 'The average length of time the I/O thread of the following Kafka consumer spent waiting for a socket ready for reads or writes was higher than {{ toYaml .Values.kafkaConsumerParam.KafkaConsumerAverageIOWaitTimeHigh.avgIOWaitTimeThreshold }} nanoseconds: Application {{`{{ $labels.applicationName }}`}} and Client ID {{`{{ $labels.client_id }}`}} in instance {{`{{ $labels.instance }}`}} of service {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}.'
+      expr: kafka_consumer_io_wait_time_ns_avg > {{ toYaml .Values.kafkaConsumerParam.KafkaConsumerAverageIOWaitTimeHigh.avgIOWaitTimeThreshold }}
+      for: {{ .Values.kafkaConsumerParam.KafkaConsumerAverageIOWaitTimeHigh.forDuration }}
+      labels:
+        severity: warning
+        expr: 'kafka_consumer_io_wait_time_ns_avg > {{ toYaml .Values.kafkaConsumerParam.KafkaConsumerAverageIOWaitTimeHigh.avgIOWaitTimeThreshold }}'
+{{- end }}
+
+{{- if .Values.kafkaConsumerParam.enableKafkaConsumerActiveConnectionCountLow }}
+    - alert: KafkaConsumerActiveConnectionCountLow
+      annotations:
+        message: 'The following Kafka consumer had no active connections: Application {{`{{ $labels.applicationName }}`}} and Client ID {{`{{ $labels.client_id }}`}} in service {{`{{ $labels.service }}`}} in namespace {{`{{ $labels.namespace }}`}}.'
+      expr: sum by (namespace, service, applicationName, client_id) (kafka_consumer_connection_count) < 1
+      for: {{ .Values.kafkaConsumerParam.KafkaConsumerActiveConnectionCountLow.forDuration }}
+      labels:
+        severity: warning
+        expr: 'sum by (namespace, service, applicationName, client_id) (kafka_consumer_connection_count) < 1'
+{{- end }}
+
+{{- end }}
