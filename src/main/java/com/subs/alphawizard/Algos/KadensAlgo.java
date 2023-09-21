@@ -2,7 +2,7 @@ package com.subs.alphawizard.Algos;
 
 public class KadensAlgo {
 
-    static int kdAlgoMaxSumSubArray(int a[]){
+    static int kdAlgoMaxSumSubArray(int[] a){
         int currSum = 0;
         int maxSum = 0;
         for(int i=0;i<a.length;i++){
@@ -19,7 +19,7 @@ public class KadensAlgo {
     }
 
     public static void main(String [] akash){
-        int a[] = {-5,4,6,-3,4,-1};
+        int [] a = {-5,4,6,-3,4,-1};
         System.out.println("Max Sum SubArray "+kdAlgoMaxSumSubArray(a));
     }
 }

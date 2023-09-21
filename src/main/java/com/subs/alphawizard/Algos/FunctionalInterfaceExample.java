@@ -20,13 +20,13 @@ class MyClass implements MyInterface{
     }
 }
 
-public class FibonacciByRecursion {
+public class FunctionalInterfaceExample {
 
     public static void main(String[] args) {
         MyClass myClass = new MyClass();
         myClass.regularMethod();
         myClass.defaultMethod();
-        myClass.defaultMethod1();;
+        myClass.defaultMethod1();
 
     }
 }

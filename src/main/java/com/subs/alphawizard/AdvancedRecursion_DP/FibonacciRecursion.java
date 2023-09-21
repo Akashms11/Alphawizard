@@ -1,4 +1,4 @@
-package com.subs.alphawizard.Algos;
+package com.subs.alphawizard.AdvancedRecursion_DP;
 
 import java.util.Scanner;
 //Recursive approach to print Fibonacci series
