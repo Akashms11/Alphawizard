@@ -1,9 +1,8 @@
 package com.subs.alphawizard.JavaAndOOPs;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SortingOfEmployee {
 
@@ -27,5 +26,6 @@ public class SortingOfEmployee {
             }
         });
         emp.forEach(System.out::println);
+        emp.stream().map(Employee::getSalary).filter(num->num>100).collect(Collectors.toList()).forEach(System.out::println);
     }
 }

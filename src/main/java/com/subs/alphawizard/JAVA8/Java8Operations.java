@@ -37,5 +37,6 @@ public class Java8Operations {
         System.out.println("Second largest element in the list is "+secondLargest);
         int product = list.stream().reduce(1,(a,b)->a*b).intValue();
         System.out.println("Product of the list "+product);
+        System.out.println('A'+'B');
     }
 }
